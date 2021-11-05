@@ -8,23 +8,39 @@ from utils.analytics import key_search, scoring
 # config
 gmm_components = config.gmm_components
 
-
 model_embedding = Word2Vec.load('result/total/w2v_model.model')
 embeddings = np.loadtxt('result/total/embeddings.txt')
+
 model_clustering = np.loadtxt('result/total/clustered.txt')
 voca = np.array(model_embedding.wv.index_to_key)
+cluster_types = np.unique(model_clustering)
 
+voca_clusters = {}
 
-voca_clusters = [voca[model_clustering == i] for i in range(gmm_components)]
-similarity_clusters = [cosine_similarity(embeddings[model_clustering == i]) for i in range(gmm_components)]
+for i in range(gmm_components):
+    voca_clusters[i] = voca[model_clustering == i]
 
-cluster_bias = []
-token_bias = []
-for similarity_cluster in similarity_clusters:
-    np.fill_diagonal(similarity_cluster, 0)
-    cluster_bias.append(np.sum(similarity_cluster)/(similarity_cluster.shape[0]*(similarity_cluster.shape[0]-1)))
+########################################################################################################################
+# 유사한 cluster로 keyword 특징 찾기
+########################################################################################################################
+similarity = cosine_similarity(embeddings)
 
-    token_bias_cluster = np.average(similarity_cluster, axis=1)
-    token_bias.append(token_bias_cluster)
+for i in range(similarity.shape[0]):
+    similarity[i, i] = 0
 
-key_score = scoring('페미', cluster_bias, token_bias, voca_clusters)[0][0]
+key = '페미'
+key_idx = np.argwhere(voca == key)[0][0]
+
+pairwise_distance = similarity[key_idx, :]
+
+top_1000_idx = np.argsort(pairwise_distance)[::-1][:1000]
+top_1000_vocas = voca[top_1000_idx]
+
+result = {}
+for voca_cluster_idx in list(voca_clusters.keys()):
+    result[voca_cluster_idx] = 0
+
+for top_1000_voca in top_1000_vocas:
+    each_cluster = voca_dictionary[top_1000_voca]
+    result[each_cluster] += 1
+print()

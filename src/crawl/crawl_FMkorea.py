@@ -16,9 +16,9 @@ direc = 'chromedriver.exe'
 delay = 3
 browser = Chrome(direc)
 browser.implicitly_wait(2)
+search_key = '여혐'
 
-# # 검색어 크롤링
-# search_key = '한남'
+# 검색어 크롤링
 # titles = []
 # addresses = []
 # for page in range(200):
@@ -37,9 +37,9 @@ browser.implicitly_wait(2)
 # titles = pd.DataFrame(titles, columns=['Title'])
 # addresses = pd.DataFrame(addresses, columns=['Aref'])
 # database = pd.concat([titles, addresses], axis=1)
-# database.to_csv('../data/FMkorea/link_FMkorea_key2.csv')
+# database.to_csv(f'../data/FMkorea/link_FMkorea_{search_key}.csv')
 
-# 일간
+# # 일간
 # titles = []
 # addresses = []
 # for page in range(200):
@@ -64,14 +64,13 @@ browser.implicitly_wait(2)
 # print()
 
 # 댓글 가져오기
-database = pd.read_csv('../data/FMkorea/link_FMkorea_key2.csv')
+database = pd.read_csv(f'../data/FMkorea/link_FMkorea_{search_key}.csv')
 arefs = database['Aref']
 comments = []
 for aref_idx, aref in enumerate(arefs):
     start_time = time.time()
     comments_per_aref = []
-    browser.get(aref)
-    html = browser.page_source
+    html = requests.get(aref).text
     soup = BeautifulSoup(html, 'html.parser')
     # 베댓
     best_comments = soup.find_all('li')
@@ -92,5 +91,5 @@ for aref_idx, aref in enumerate(arefs):
         print(f'{aref_idx}th DONE')
 #
 database_comments = pd.DataFrame(comments)
-database_comments.to_csv('../data/FMkorea/comments_fmkorea_key2_raw.csv')
+database_comments.to_csv(f'../data/FMkorea/comments_fmkorea_{search_key}_raw.csv')
 print()

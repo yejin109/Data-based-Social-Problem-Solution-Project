@@ -10,7 +10,9 @@ z = re.compile('ㅉ*')
 u = re.compile('ㅜ*')
 w = re.compile('ㅠ*')
 
+# target_pos = ['NNG', 'NNP']
 target_pos = ['NNG', 'NNP', 'VV', 'VA', 'VCP', 'VCN', 'XR']
+
 
 def tokenizer(t):
     text = t

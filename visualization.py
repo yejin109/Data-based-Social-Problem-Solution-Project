@@ -10,8 +10,6 @@ from gensim.models import Word2Vec
 target_words = config.target_words
 font = config.font
 
-
-
 # Visualization
 model_embedding = Word2Vec.load('result/total/w2v_model.model')
 embeddings = np.loadtxt('result/total/embeddings.txt')

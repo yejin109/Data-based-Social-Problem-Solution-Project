@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
-import Settings as sets
 from utils import Tokenizer as tk
+import config
 
 
 def mecab_token(texts):
-    stopwords = sets.stopwords
+    stopwords = config.stopwords
     print('Mecab Tokenization has just started!')
     tokenized_sentence = []
     voca = {}
