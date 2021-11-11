@@ -1,24 +1,29 @@
 import numpy as np
+import pandas as pd
 from gensim.models import Word2Vec
 from sklearn.metrics.pairwise import cosine_similarity
 
 import config
-from utils.analytics import key_search, scoring
+from utils.analytics import key_search, scoring, get_similar_clusters
 
 # config
-gmm_components = config.gmm_components
+model_embedding = Word2Vec.load('result/w2v_model.model')
+embeddings = model_embedding.wv.vectors
 
-model_embedding = Word2Vec.load('result/total/w2v_model.model')
-embeddings = np.loadtxt('result/total/embeddings.txt')
+token = np.array(model_embedding.wv.index_to_key)
+token_info = pd.read_csv('result/token_info.csv', index_col=0)
 
-model_clustering = np.loadtxt('result/total/clustered.txt')
-voca = np.array(model_embedding.wv.index_to_key)
+token2cluster = {}
+for row in range(token_info.shape[0]):
+    each = token_info.iloc[row]
+    token2cluster[each[0]] = each[1]
+model_clustering = token_info['Cluster']
 cluster_types = np.unique(model_clustering)
 
-voca_clusters = {}
+cluster2token = {}
 
-for i in range(gmm_components):
-    voca_clusters[i] = voca[model_clustering == i]
+for i in cluster_types:
+    cluster2token[i] = token[model_clustering == i]
 
 ########################################################################################################################
 # 유사한 cluster로 keyword 특징 찾기
@@ -29,18 +34,13 @@ for i in range(similarity.shape[0]):
     similarity[i, i] = 0
 
 key = '페미'
-key_idx = np.argwhere(voca == key)[0][0]
+search_keys = config.search_keys
+overall_results = get_similar_clusters(token, similarity, cluster2token, token2cluster, key)
 
-pairwise_distance = similarity[key_idx, :]
+for search_key in search_keys:
+    result = get_similar_clusters(token, similarity, cluster2token, token2cluster, search_key)
+    overall_results = pd.concat((overall_results, result), axis=0)
 
-top_1000_idx = np.argsort(pairwise_distance)[::-1][:1000]
-top_1000_vocas = voca[top_1000_idx]
+# overall_results.to_csv('result/search_key_result.csv')
 
-result = {}
-for voca_cluster_idx in list(voca_clusters.keys()):
-    result[voca_cluster_idx] = 0
-
-for top_1000_voca in top_1000_vocas:
-    each_cluster = voca_dictionary[top_1000_voca]
-    result[each_cluster] += 1
 print()

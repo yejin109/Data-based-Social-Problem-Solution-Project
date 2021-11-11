@@ -14,7 +14,7 @@ font = config.font
 model_embedding = Word2Vec.load('result/total/w2v_model.model')
 embeddings = np.loadtxt('result/total/embeddings.txt')
 model_clustering = np.loadtxt('result/total/clustered.txt')
-f = open('result/total/voca.txt', 'r', encoding='UTF8')
+f = open('trashcan/잘못한 것/total/voca.txt', 'r', encoding='UTF8')
 voca = []
 while True:
     line = f.readline()

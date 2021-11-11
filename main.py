@@ -19,36 +19,41 @@ gmm_components = config.gmm_components
 ########################################################################################################################
 # Data Loading
 ########################################################################################################################
-comments = loader.comments
+# comments = loader.comments
 
 ########################################################################################################################
 # Preprocess
 ########################################################################################################################
-print('Tokenization start')
-start = time.time()
-tokenized_comments, token_frequency, token_frequency_sentencewise = mecab_token(comments)
-print(f'Duration: {time.time() - start}')
+# print('Tokenization start')
+# start = time.time()
+# tokenized_comments, token_frequency, token_frequency_sentencewise = mecab_token(comments)
+# print(f'Duration: {time.time() - start}')
 
 ########################################################################################################################
 # Model(W2V, GMM) training
 ########################################################################################################################
-print('W2V start')
-start = time.time()
-model_embedding = Word2Vec(tokenized_comments, vector_size=1024, compute_loss=True, seed=1246, epochs=5, sg=1,
-                           hs=0, alpha=1e-2, callbacks=[CustomCallback()])
-print(f'Duration: {time.time() - start}')
-# model_embedding.save('result/total/w2v_model.model')
+# print('W2V start')
+# start = time.time()
+# model_embedding = Word2Vec(tokenized_comments, vector_size=1024, compute_loss=True, seed=1246, epochs=5, sg=1,
+#                            hs=0, alpha=1e-2, callbacks=[CustomCallback()])
+# print(f'Duration: {time.time() - start}')
+# model_embedding.save('result/w2v_model.model')
 
-# model_embedding = Word2Vec.load('result/total/w2v_model.model')
-embeddings = model_embedding.wv.vectors
-print('GMM start')
-start = time.time()
-model_clustering = GaussianMixture(n_components=gmm_components, random_state=1246).fit_predict(embeddings)
-print(f'Duration: {time.time() - start}')
+# model_embedding = Word2Vec.load('result/w2v_model.model')
+# embeddings = model_embedding.wv.vectors
+# print('GMM start')
+# start = time.time()
+# model_clustering = GaussianMixture(n_components=gmm_components, random_state=1246).fit_predict(embeddings)
+# print(f'Duration: {time.time() - start}')
+# np.savetxt('result/parent_cluster.txt', model_clustering)
 
 ########################################################################################################################
 # Hierarchical clustering : 일부 클러스터에 많이 모여있는 것을 다시 clustering.
 ########################################################################################################################
+model_embedding = Word2Vec.load('result/w2v_model.model')
+model_clustering = np.loadtxt('result/parent_cluster.txt')
+embeddings = model_embedding.wv.vectors
+
 voca = np.array(model_embedding.wv.index_to_key)
 voca_clusters = {}
 
@@ -56,8 +61,8 @@ for i in range(gmm_components):
     voca_clusters[i] = voca[model_clustering == i]
 
 # 현잰 3,4번에 많이 모여있는 것으로 판단.
-parent_clusters = [3, 4]
-child_components = 10
+parent_clusters = [3, 4, 8]
+child_components = {'3': 8, '4': 9, '8': 10}
 parentwise_child_clustering = {}
 
 for parent_cluster_idx in parent_clusters:
@@ -65,15 +70,17 @@ for parent_cluster_idx in parent_clusters:
     start = time.time()
     parent_cluster_voca = voca_clusters[parent_cluster_idx]
     parent_cluster_embedding = embeddings[model_clustering == parent_cluster_idx]
-    child_clustering = GaussianMixture(n_components=child_components, random_state=1246).fit_predict(parent_cluster_embedding)
+    child_clustering = GaussianMixture(n_components=child_components[str(parent_cluster_idx)],
+                                       random_state=1246).fit_predict(parent_cluster_embedding)
     parentwise_child_clustering[parent_cluster_idx] = child_clustering
-    # np.savetxt(f'result/total/{parent_cluster_idx}th_child_cluster.txt', child_clustering)
+    np.savetxt(f'result/{parent_cluster_idx}th_child_cluster.txt', child_clustering)
     # child_clusters = [parent_cluster_voca[child_clustering == i] for i in range(child_components)]
     print(f'Duration: {time.time() - start}')
+    print()
 
 for parent_cluster_idx in parent_clusters:
     past_cluster = voca_clusters.pop(parent_cluster_idx)
-    parent_cluster = np.loadtxt(f'result/total/{parent_cluster_idx}th_child_cluster.txt')
+    parent_cluster = np.loadtxt(f'result/{parent_cluster_idx}th_child_cluster.txt')
     parent_cluster_types = np.unique(parent_cluster)
     for parent_cluster_type in parent_cluster_types:
         voca_clusters[int(str(parent_cluster_idx)+str(int(parent_cluster_type)))] = past_cluster[parent_cluster==parent_cluster_type]
@@ -86,7 +93,7 @@ for token_cluster_idx, cluster_contents in voca_clusters.items():
 ########################################################################################################################
 # Save : W2V model / token list / cluster별 token / token-cluster matching
 ########################################################################################################################
-model_embedding.save('result/total/w2v_model.model')
+# model_embedding.save('result/w2v_model.model')
 
 # f = open('result/total/voca.txt', 'a', encoding="UTF-8-sig")
 # for voca in model_embedding.wv.index_to_key:
@@ -101,8 +108,10 @@ model_embedding.save('result/total/w2v_model.model')
 
 token_cluster = pd.DataFrame(columns=['Token', 'Cluster'])
 for token, cluster_idx in voca_dictionary.items():
-    current = pd.DataFrame([token, cluster_idx], columns=['Token', 'Cluster'])
-    token_cluster = pd.concat((token_cluster, ), axis=0)
-token_cluster.to_csv('result/token_cluster.csv')
+    current = pd.DataFrame.from_dict({'Token': [token],
+                                      'Cluster': [cluster_idx],
+                                      'Embedding': [embeddings[model_embedding.wv.key_to_index[token]]]})
+    token_cluster = pd.concat((token_cluster, current), axis=0)
+token_cluster.to_csv('result/token_info.csv')
 
 print()
