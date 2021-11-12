@@ -16,6 +16,15 @@ stopwords = ['의', '가', '은', '는', '이', '과', '를', '으로', 'ㅡㅡ'
              '가지', '어도', '에요', '그렇', '제발', '어디', '건데', '한데', '크', '웃'
              ]
 
-search_keys = ['남혐', '여시', '여혐', '열폭', '찐따', '취집', '탈코', '트페미', '페미', '한남']
+search_keys = ['페미', '남혐', '여시', '여혐', '열폭', '찐따', '취집', '탈코', '트페미', '한남', '자적자', '소추', '잦', '온냐',
+               '유충', '이대남', '숏컷']
+
+keys_type = dict()
+for search_key in search_keys:
+    keys_type[search_key] = 'Biased'
+
+politic_keys = ['홍준표', '이재명', '이준석', '박원순', '문재인']
+for politic_key in politic_keys:
+    keys_type[politic_key] = 'Politic'
 
 gmm_components = 10

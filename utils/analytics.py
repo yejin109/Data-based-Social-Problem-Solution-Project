@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from yonsei_social import config
+
 
 def key_search(key: list, voca_clusters):
     for cluster_idx, voca_cluster in enumerate(voca_clusters):
@@ -19,6 +21,7 @@ def scoring(key: str, cluster_bias, token_bias, voca_clusters):
 
 
 def get_similar_clusters(token, similarity, cluster2token, token2cluster, key: str):
+    key_type = config.keys_type[key]
     key_idx = np.argwhere(token == key)[0][0]
 
     pairwise_distance = similarity[key_idx, :]
@@ -33,10 +36,13 @@ def get_similar_clusters(token, similarity, cluster2token, token2cluster, key: s
     for top_1000_voca in top_tokens:
         each_cluster = token2cluster[top_1000_voca]
         cluster_scores[each_cluster] += 1
+        # When Normalizing
+        # cluster_scores[each_cluster] += 1/len(cluster2token[each_cluster])
 
     for cluster_score_key, cluster_score_value in cluster_scores.items():
         cluster_scores[cluster_score_key] = [cluster_score_value]
 
     result = pd.DataFrame.from_dict(cluster_scores)
     result.index = [key]
+    result['Type'] = key_type
     return result
