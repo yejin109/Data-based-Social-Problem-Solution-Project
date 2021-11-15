@@ -27,4 +27,8 @@ politic_keys = ['홍준표', '이재명', '이준석', '박원순', '문재인']
 for politic_key in politic_keys:
     keys_type[politic_key] = 'Politic'
 
+idol_keys = ['잭슨', '정은지', '구하라', '서강준', '이제훈', '송혜교', '류준열', '아웃사이더']
+for idol_key in idol_keys:
+    keys_type[politic_key] = 'Entertainment'
+
 gmm_components = 10
